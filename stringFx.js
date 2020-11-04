@@ -1,8 +1,9 @@
 /* String to String Addition
  * Requirement:
- *   All values in Param are String
+ *   strTrimLead String function
  *
- * return String of the result
+ * @param... , this is a rest parameter accepting any numeric String values to sum together (Whole numbers only)
+ * @return   , this is the sum of the params in numeric String
  */
 const strAdd = (...str) => {
   let carryDigit = 0, sum = 0;
@@ -26,17 +27,16 @@ const strAdd = (...str) => {
     carryDigit = Math.floor(sum / 10);
   } while (maxLength--);  
   //Trim leading 0 if any
-  while (final.charAt(0) === '0')
-    final = final.substring(1);
-  
-  return final || '0';
+  final = strTrimLead(final);
+  return final;
 }
 /* String to String Subtraction
  * Requirement:
- *   Param 1 >= Param 2
- *   Param 1 and Param 2 is String
- *
- * return String of the result
+ *   strTrimLead String Function
+ * 
+ * @param 1, numeric String that is going to be subtracted
+ * @param 2, numeric String that is subtracting the param 1
+ * @return , this is the numeric String value of the result
  */
 const strMinus = (strA, strB) => {
   let arrA = [...strA];
@@ -60,16 +60,16 @@ const strMinus = (strA, strB) => {
   while (aIndex >= 0)
     final = arrA[aIndex--] + final;
   //Trim leading 0 if any
-  while (final.charAt(0) === '0')
-    final = final.substring(1);
-
+  final = strTrimLead(final);
   return final || '0';
 }
-/* String to String multiplications (standalone. Dont need to use strAdd function)
+/* String to String multiplications (standalone. Using Verdic Math method)
  * Requirement:
- *   All values in Param are String (can be decimal point)
- *
- * return String of the result
+ *   strTrimLead  String function
+ *   strTrimTrail String function
+ * 
+ * @param... , this is a rest parameter that multiply all numeric String value together
+ * @return   , this is the numeric String value of the result
  */
 const strMulti = (...args) => {
   let zeroPad = 0, decimalPoint, maxLength = 0;
@@ -83,8 +83,7 @@ const strMulti = (...args) => {
       args[i] = args[i].substring(0, args[i].length - 1);
       zeroPad--;
     }
-    while (args[i].charAt(0) === '0')
-      args[i] = args[i].substring(1);
+    args[i] = strTrimLead(args[i]);
     maxLength = Math.max(maxLength, args[i].length);
   });
   //Removes any trailing 0s in the array for smaller calculation
@@ -150,22 +149,164 @@ const strMulti = (...args) => {
   } while (args.length > 1);
   //Trim the leading 0s
   args = args.shift();
-  while (args.charAt(0) === '0')
-    args = args.substring(1);
+  args = strTrimLead(args);
   //Insert the decimal back using zeroPad
   if (zeroPad < 0)
     args = args + '0'.repeat(0 - zeroPad);
-  else if (zeroPad > 0) {
+  else if (zeroPad > 0)
     if (zeroPad < args.length) {
       args = `${args.substring(0, args.length - zeroPad)}.${args.substring(args.length - zeroPad)}`;
       if (args.indexOf('.') >= 0)
-        while (args.charAt(args.length - 1) === '0')
-          args = args.slice(0, -1);
+        args = strTrimTrail(args);
           
       if (args.charAt(args.length - 1) === '.') 
         args = args.slice(0, -1);
     } else 
       args = `0.${'0'.repeat(zeroPad - args.length)}${args}`;
-  }
   return args || "0";
+}
+/* String to String numeric comparison
+ * Requirement:
+ *   strTrimLead String Function
+ *
+ * @param 1, this is one of the numeric String to compare
+ * @param 2, this is onw of the numeric String to compare
+ * @return , number result : 1 if it is greater than, 0 if equal and -1 if less than
+ */
+const strGreaterThan = (strA, strB) => {
+  //Trim leading 0 for each
+  strA = strTrimLead(strA);
+  strB = strTrimLead(strB);
+  if (strA.length > strB.length)
+    //strA is atleast a digit longer than strB
+    return 1;
+  else if (strA.length < strB.length)
+    //strB is atleast a digit longer than strA
+    return -1;
+  else {
+    //strA and strB are the same length. iterate each of them to compare by character
+    for (let i = 0; i < strA.length; i++)
+      if (strA.charAt(i) > strB.charAt(i))
+        return 1;
+      else if (strA.charAt(i) < strB.charAt(i))
+        return -1;
+    //All digit compare equally, return equal
+    return 0;
+  }
+}
+/* String leading trimmer
+ * Requirement:
+ *
+ * @param 1, this is the numeric String to trim
+ * @param 2, this is the character to look for to delete from the start, default '0'
+ * @return , the trimmed version of the input String
+ */
+const strTrimLead = (str, char = '0') => {
+  while (str.charAt(0) === char)
+    str = str.slice(1);
+  return str || '0';
+}
+/* String trailing trimmer
+ * Requirement:
+ *
+ * @param 1, this is the numeric String to trim
+ * @param 2, this is the character to look for to delete from the end, default '0'
+ * @return , the trimmed version of the input String
+ */
+const strTrimTrail = (str, char = '0') => {
+  while (str.charAt(str.length - 1) === char)
+    str = str.slice(0, -1);
+  return str || '0';
+}
+/* String normalizer
+ * Requirement:
+ *
+ * @param 1, this is the numeric String input and fixes decimal number if it is starting with .
+ * @return , normalized value
+ */
+const strNormalize = (str) => {
+  return str.charAt(0) === '.' ? `0${str}` : str
+}
+/* String to String Divisor
+ * Requirement:
+ *   strGreaterThan String Function
+ *   strAdd         String Function
+ *   strMinus       String Function
+ *   strTrimLead    String Function
+ *   strNormalize   String Function
+ *
+ * @param 1, this is the divident (numeric String input)
+ * @param 2, this is the divisor  (numeric String input)
+ * @param 3, this is the limit of decimal places to allow, default 5 (number input)
+ * @return , this is the quotient
+ */
+const strDivide = (strTop, strBot, decimals = 5) => {
+  let zeroPad = 0, decimalPoint, strToDivide, q, final = '', oDecimal, qAfter, qInt, whole = 0, decimalPlaceFlag = false;
+  //Bring both String to whole number by moving the decimal points
+  if (strTop === '0')
+    return strTop;
+  if ((decimalPoint = strBot.indexOf('.')) >= 0) {
+  	zeroPad += strBot.length - 1 - decimalPoint;
+    strBot = strBot.replace(/\./, '');
+  }
+  if ((decimalPoint = strTop.indexOf('.')) >= 0) {
+    zeroPad -= strTop.length - 1 - decimalPoint;
+    strTop = strTop.replace(/\./, '');
+  }
+  while (zeroPad < 0) {
+    strBot = strBot + '0';
+    zeroPad++;
+  }
+  while (zeroPad > 0) {
+    strTop = strTop + '0';
+    zeroPad--;
+  }
+  while (strBot.charAt(0) === '0')
+    strBot = strBot.substring(1);
+  while (strTop.charAt(0) === '0')
+    strTop = strTop.substring(1);
+  oDecimal = decimals;
+  //Grab digits from strTop up to strBot's length
+  if (strTop.length > strBot.length)
+    strToDivide = strTop.slice(0, -(strTop.length - strBot.length));
+  else
+    strToDivide = strTop;
+  strTop = strTop.slice(strBot.length);
+  //Dividing starts
+  while (decimals >= 0 && final.length <= whole + oDecimal) {
+    //Resets the single digit quotient
+    q = '0';
+    qInt = 0;
+    while (strGreaterThan(qAfter = strAdd(q, strBot), strToDivide) <= 0) {
+      q = qAfter;
+      qInt++;
+    }
+    if (qInt && !decimalPlaceFlag && final.length == 0)
+      whole++;
+    //Minus the q from strToDivide
+    final += qInt.toString();
+    strToDivide = strMinus(strToDivide, q);
+    //Add the next from strTop to the leftover strToDivide
+    if (strToDivide === '0' && !strTop)
+      break;
+    if (strTop) {
+      strToDivide += strTop.slice(0);
+      strTop = strTop.substring(1);
+      whole++;
+    } else {
+      strToDivide += '0';
+      decimals--;
+      decimalPlaceFlag = true;
+    }
+  }
+  //Place the decimal in
+  if (decimals === -1)
+    final = `${strTrimLead(final.substring(0, final.length - oDecimal))}.${final.substring(final.length - oDecimal)}`;
+  else if (decimals === oDecimal)
+    final = strTrimLead(final).substring(0, whole);
+  else {
+    final = strTrimLead(final);
+    final = `${final.substring(0, whole)}.${final.substring(whole)}`;
+  }
+  return strNormalize(final);
 }
